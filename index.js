@@ -1,11 +1,11 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const mysql = require('mysql');
+const cors = require('cors');
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3001;
 
-// Configuración de la conexión a la base de datos
 const dbConfig = {
   host: 'data-avimo.cgriqmyweq5c.us-east-2.rds.amazonaws.com',
   user: 'testing',
@@ -20,10 +20,32 @@ connection.connect((err) => {
     console.error('Error al conectar a la base de datos:', err);
   } else {
     console.log('Conexión exitosa a la base de datos');
+
+    // Crear la tabla si no existe
+    const createTableQuery = `
+      CREATE TABLE IF NOT EXISTS LautaroFigueroa (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        nombre VARCHAR(255),
+        segundo_nombre VARCHAR(255),
+        apellido_paterno VARCHAR(255),
+        apellido_materno VARCHAR(255),
+        fecha_nacimiento VARCHAR(255),
+        email VARCHAR(255),
+        telefono VARCHAR(255)
+      )
+    `;
+
+    connection.query(createTableQuery, (createErr, createResult) => {
+      if (createErr) {
+        console.error('Error al crear la tabla usuarios:', createErr);
+      } else {
+        console.log('Tabla usuarios creada o ya existente');
+      }
+    });
   }
 });
 
-// Configuración de middleware
+app.use(cors());
 app.use(bodyParser.json());
 
 // Ruta para guardar datos en la tabla "usuarios"
@@ -38,10 +60,10 @@ app.post('/api/usuarios', (req, res) => {
     telefono,
   } = req.body;
 
-  const tableName = `${nombre}${segundoNombre}${apellidoPaterno}`;
+  const tableName = `${nombre}${segundoNombre || ''}${apellidoPaterno}${apellidoMaterno || ''}`;
 
   const insertQuery = `
-    INSERT INTO usuarios (nombre, segundo_nombre, apellido_paterno, apellido_materno, fecha_nacimiento, email, telefono)
+    INSERT INTO LautaroFigueroa (nombre, segundo_nombre, apellido_paterno, apellido_materno, fecha_nacimiento, email, telefono)
     VALUES (?, ?, ?, ?, ?, ?, ?)
   `;
 
